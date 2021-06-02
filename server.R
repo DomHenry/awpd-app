@@ -35,7 +35,14 @@ server <- function(input, output, session) {
       )
     )
     updateSelectizeInput(session,
-      inputId = "species_choice", label = NULL, choices = list_species,
+      inputId = "species_choice", label = NULL, choices = list(
+        `Vultures` = wp_data %>% filter(taxa == "Vulture") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Birds` = wp_data %>% filter(taxa == "Bird") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Fish` = wp_data %>% filter(taxa == "Fish") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort()
+      ),
       selected = NULL, options = list(
         placeholder = "All species selected"
       )
@@ -59,58 +66,93 @@ server <- function(input, output, session) {
       value = c(list_year_start, list_year_end),
       step = 1
     )
+
     updateRadioButtons(session,
-      inputId = "y_choice", label = "Choose y-axis",
+      inputId = "y_choice", label = "Display",
       choices = c(
         "Mortalties" = "total_mort",
         "Incidents" = "total_incidents"
       ),
-      selected = "total_mort"
+      selected = "total_mort", inline = TRUE
     )
 
     updateRadioButtons(session,
       inputId = "gltca_choice", label = "Data tag",
       choices = c(
-        "All" = "all",
-        "GLTCA only" = "gltca"
+        "All" = "ALL",
+        "GLTCA only" = "GLTFCA"
       ),
-      selected = "all"
+      selected = "ALL", inline = TRUE
+    )
+
+    updateSelectInput(session,
+      inputId = "baseplot", label = NULL,
+      choices = c(
+        "Country" = "country",
+        "Year" = "year",
+        "Poison type" = "poison_family",
+        "Poison reason" = "poison_reason"
+      ),
+      selected = "country"
     )
   })
 
   ## Data frame query ----
   query_data <- reactive({
     wp_data %>%
+      filter(if (input$gltca_choice == "GLTFCA") tag == "GLTFCA" else tag %in% c("ALL", "GLTFCA")) %>%
       filter(country %in% values$country_choice) %>%
       filter(vernacularname %in% values$species_choice) %>%
       filter(poison_family %in% values$poison_choice) %>%
-      filter(reason_for_p %in% values$reason_choice) %>%
+      filter(poison_reason %in% values$reason_choice) %>%
       filter(year %in% c(min(input$year_slider):max(input$year_slider))) %>%
-      group_by(country) %>% # Change this to tidy eval variable .data[[input$group_var]]
+      group_by(.data[[input$baseplot]]) %>%
       summarise(
         total_mort = sum(mortality),
         total_incidents = length(unique(global_id))
       )
   })
 
+  ylab_plot <- reactive({
+
+    ifelse(input$y_choice == "total_mort", "Mortalities","Incidents")
+  })
+
   ## Render country plot ----
   output$plot <- renderPlot(
     {
-      plot_country(query_data(), .data[[input$y_choice]])
+      if (input$baseplot == "country") {
+        plot_country(query_data(), .data[[input$y_choice]],ylab_plot())
+      } else if (input$baseplot == "poison_family") {
+        plot_poison(query_data(), .data[[input$y_choice]],ylab_plot())
+      } else if (input$baseplot == "year") {
+        plot_year(query_data(), .data[[input$y_choice]],ylab_plot())
+      } else if (input$baseplot == "poison_reason") {
+        plot_reason(query_data(), .data[[input$y_choice]],ylab_plot())
+      }
     },
     height = 500,
     width = 700
   )
 
   ## Download country plot ----
-  output$downloadPlot_country <- downloadHandler(
+  output$download_plot <- downloadHandler(
     filename = function() {
-      paste0(Sys.Date(), " country_plot.png")
+      paste0("AWPD plot ", Sys.Date(), ".png")
     },
     content = function(file) {
       ggsave(file,
-        plot = plot_country(query_data(), .data[[input$y_choice]])
-        )
+        plot = if (input$baseplot == "country") {
+          plot_country(query_data(), .data[[input$y_choice]],ylab_plot())
+        } else if (input$baseplot == "poison_family") {
+          plot_poison(query_data(), .data[[input$y_choice]],ylab_plot())
+        } else if (input$baseplot == "year") {
+          plot_year(query_data(), .data[[input$y_choice]],ylab_plot())
+        } else if (input$baseplot == "poison_reason") {
+          plot_reason(query_data(), .data[[input$y_choice]],ylab_plot())
+        },
+        width = 10, height = 8
+      )
     }
   )
 }
