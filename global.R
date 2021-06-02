@@ -164,3 +164,24 @@ plot_year <- function(data, y_choice, ylab){
 
 plot_year(data, total_incidents, "Incidents")
 plot_year(data, total_mort, "Mortalities")
+
+data <- wp_data %>%
+  group_by(taxa) %>% # Taxon, decade,
+  summarise(total_mort = sum(mortality),
+            total_incidents = length(unique(global_id)))
+
+plot_animal <- function(data, y_choice, ylab){
+  data %>%
+    ggplot(aes(x = reorder(taxa, {{y_choice}}),
+               y = {{y_choice}}))+
+    geom_bar(stat = "identity", fill = alpha("forestgreen",0.8), color = "black")+
+    coord_flip()+
+    xlab("")+
+    ylab(ylab)+
+    theme_bw()+
+    theme(axis.text = element_text(color = "black", size = 15),
+          axis.title = element_text(color = "black", size = 15))
+}
+
+plot_animal(data, total_incidents, "Incidents")
+plot_animal(data, total_mort, "Mortalities")

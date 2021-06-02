@@ -28,7 +28,8 @@ sidebar <- dashboardSidebar( width = 350,
         "Country" = "country",
         "Year" = "year",
         "Poison type" = "poison_family",
-        "Poison reason" = "poison_reason"
+        "Poison reason" = "poison_reason",
+        "Animal group" = "taxa"
       ),
       selected = "country"
     ),
@@ -41,7 +42,7 @@ sidebar <- dashboardSidebar( width = 350,
       selected = NULL, inline = TRUE
     ),
     sliderInput("year_slider",
-                label = NULL,
+                label = "Date range",
                 min = list_year_start, max = list_year_end,
                 value = c(list_year_start, list_year_end),
                 sep = "", step = 1

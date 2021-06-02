@@ -61,7 +61,7 @@ server <- function(input, output, session) {
     )
     updateSliderInput(session,
       inputId = "year_slider",
-      label = NULL,
+      label = "Date range",
       min = list_year_start, max = list_year_end,
       value = c(list_year_start, list_year_end),
       step = 1
@@ -91,7 +91,8 @@ server <- function(input, output, session) {
         "Country" = "country",
         "Year" = "year",
         "Poison type" = "poison_family",
-        "Poison reason" = "poison_reason"
+        "Poison reason" = "poison_reason",
+        "Animal group" = "taxa"
       ),
       selected = "country"
     )
@@ -129,6 +130,8 @@ server <- function(input, output, session) {
         plot_year(query_data(), .data[[input$y_choice]],ylab_plot())
       } else if (input$baseplot == "poison_reason") {
         plot_reason(query_data(), .data[[input$y_choice]],ylab_plot())
+      } else if (input$baseplot == "taxa") {
+        plot_animal(query_data(), .data[[input$y_choice]],ylab_plot())
       }
     },
     height = 500,
