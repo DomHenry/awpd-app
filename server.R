@@ -92,6 +92,7 @@ server <- function(input, output, session) {
         "Year" = "year",
         "Poison type" = "poison_family",
         "Poison reason" = "poison_reason",
+        "Top 20 species" = "vernacularname",
         "Animal group" = "taxa"
       ),
       selected = "country"
@@ -132,6 +133,8 @@ server <- function(input, output, session) {
         plot_reason(query_data(), .data[[input$y_choice]],ylab_plot())
       } else if (input$baseplot == "taxa") {
         plot_animal(query_data(), .data[[input$y_choice]],ylab_plot())
+      } else if(input$baseplot == "vernacularname") {
+        plot_top20(query_data(), .data[[input$y_choice]], ylab_plot())
       }
     },
     height = 500,
@@ -153,6 +156,8 @@ server <- function(input, output, session) {
           plot_year(query_data(), .data[[input$y_choice]],ylab_plot())
         } else if (input$baseplot == "poison_reason") {
           plot_reason(query_data(), .data[[input$y_choice]],ylab_plot())
+        } else if(input$baseplot == "vernacularname") {
+          plot_top20(query_data(), .data[[input$y_choice]], ylab_plot())
         },
         width = 10, height = 8
       )

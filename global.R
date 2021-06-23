@@ -3,7 +3,6 @@ library(tidyverse)
 library(shinythemes)
 library(glue)
 library(shinydashboard)
-library(DT)
 library(DBI)
 library(RPostgres)
 
@@ -46,15 +45,24 @@ wp_data %>%
 
 # Add attributes ----------------------------------------------------------
 
-## Decade
+## Decade - there are lots of missing obsdate so don't use this.
+# wp_data <- wp_data %>%
+#   mutate(year = lubridate::year(obsdate))
+
+## Remove 'zero' dates
 wp_data <- wp_data %>%
-  mutate(year = lubridate::year(obsdate))
+  filter(year > 1950)
 
 ## Assign taxon group
 ani_group <- read_csv("species_list_designation.csv")
 
 wp_data <- wp_data %>%
   left_join(ani_group)
+
+wp_data %>%
+  filter(is.na(taxa)) %>%
+  distinct(vernacularname) %>%
+  write_csv("add_spp_to_designation.csv")
 
 # Create lists ------------------------------------------------------------
 list_countries <- sort(unique(wp_data$country))
@@ -66,6 +74,14 @@ list_year_end <- as.integer(max(wp_data$year, na.rm = TRUE))
 list_taxa <- sort(unique(wp_data$taxa))
 
 wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort()
+
+# Define plot theme and colors --------------------------------------------
+awpd_theme <- theme_bw()+
+  theme(axis.text = element_text(color = "black", size = 15),
+        axis.title = element_text(color = "black", size = 15))
+
+bar_fill <- alpha("grey", 0.8)
+bar_col <- "black"
 
 # Country figure ----------------------------------------------------------
 data <- wp_data %>%
@@ -84,22 +100,22 @@ data <- wp_data %>%
   summarise(total_mort = sum(mortality),
             total_incidents = length(unique(global_id)))
 
+
 plot_country <- function(data, y_choice, ylab){
   data %>%
     ggplot(aes(x = reorder(country, {{y_choice}}),
                y = {{y_choice}}))+
-    geom_bar(stat = "identity", fill = alpha("forestgreen",0.8), color = "black")+
+    geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
     xlab("")+
     ylab(ylab)+
     coord_flip()+
-    theme_bw()+
-    theme(axis.text = element_text(color = "black", size = 15),
-          axis.title = element_text(color = "black", size = 15))
+    awpd_theme
 }
 
 plot_country(data, total_incidents,"Incidents")
 plot_country(data, total_mort, "Mortalities")
 
+# Poison type figure ------------------------------------------------------
 data <- wp_data %>%
   group_by(poison_family) %>% # Taxon, decade,
   summarise(total_mort = sum(mortality),
@@ -109,41 +125,38 @@ plot_poison <- function(data, y_choice, ylab){
   data %>%
     ggplot(aes(x = reorder(poison_family, {{y_choice}}),
                y = {{y_choice}}))+
-    geom_bar(stat = "identity", fill = alpha("forestgreen",0.8), color = "black")+
+    geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
     xlab("")+
     ylab(ylab)+
     coord_flip()+
-    theme_bw()+
-    theme(axis.text = element_text(color = "black", size = 15),
-          axis.title = element_text(color = "black", size = 15))
+    awpd_theme
 }
 
 plot_poison(data, total_incidents,"Incidents")
 plot_poison(data, total_mort, "Mortalities")
 
+# Poison reason figure ----------------------------------------------------
 data <- wp_data %>%
   group_by(poison_reason) %>% # Taxon, decade,
   summarise(total_mort = sum(mortality),
             total_incidents = length(unique(global_id)))
 
-
 plot_reason <- function(data, y_choice, ylab){
   data %>%
     ggplot(aes(x = reorder(poison_reason, {{y_choice}}),
                y = {{y_choice}}))+
-    geom_bar(stat = "identity", fill = alpha("forestgreen",0.8), color = "black")+
+    geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
     xlab("")+
     ylab(ylab)+
     coord_flip()+
     theme_bw()+
-    theme(axis.text = element_text(color = "black", size = 15),
-          axis.title = element_text(color = "black", size = 15))
+    awpd_theme
 }
 
 plot_reason(data, total_incidents, "Incidents")
 plot_reason(data, total_mort, "Mortalities")
 
-
+# Year figure -------------------------------------------------------------
 data <- wp_data %>%
   group_by(year) %>% # Taxon, decade,
   summarise(total_mort = sum(mortality),
@@ -153,18 +166,18 @@ plot_year <- function(data, y_choice, ylab){
   data %>%
     ggplot(aes(x = year,
                y = {{y_choice}}))+
-    geom_bar(stat = "identity", fill = alpha("forestgreen",0.8), color = "black")+
+    geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
     # coord_flip()+
     xlab("")+
     ylab(ylab)+
     theme_bw()+
-    theme(axis.text = element_text(color = "black", size = 15),
-          axis.title = element_text(color = "black", size = 15))
+    awpd_theme
 }
 
 plot_year(data, total_incidents, "Incidents")
 plot_year(data, total_mort, "Mortalities")
 
+# Animal group figure -----------------------------------------------------
 data <- wp_data %>%
   group_by(taxa) %>% # Taxon, decade,
   summarise(total_mort = sum(mortality),
@@ -174,14 +187,47 @@ plot_animal <- function(data, y_choice, ylab){
   data %>%
     ggplot(aes(x = reorder(taxa, {{y_choice}}),
                y = {{y_choice}}))+
-    geom_bar(stat = "identity", fill = alpha("forestgreen",0.8), color = "black")+
+    geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
     coord_flip()+
     xlab("")+
     ylab(ylab)+
     theme_bw()+
-    theme(axis.text = element_text(color = "black", size = 15),
-          axis.title = element_text(color = "black", size = 15))
+    awpd_theme
 }
 
 plot_animal(data, total_incidents, "Incidents")
 plot_animal(data, total_mort, "Mortalities")
+
+
+# Top 20 species figure ---------------------------------------------------
+
+## Or top n species?
+
+data <- wp_data %>%
+  group_by(vernacularname) %>% # Taxon, decade,
+  summarise(total_mort = sum(mortality),
+            total_incidents = length(unique(global_id)))
+
+data %>%
+  arrange(desc(total_mort)) %>%
+  top_n(20)
+
+data %>%
+  arrange(desc(total_incidents))
+
+plot_top20 <- function(data, y_choice, ylab){
+  data %>%
+    arrange(desc({{y_choice}})) %>%
+    top_n(20) %>%
+    ggplot(aes(x = reorder(vernacularname, {{y_choice}}),
+               y = {{y_choice}}))+
+    geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
+    coord_flip()+
+    xlab("")+
+    ylab(ylab)+
+    theme_bw()+
+    awpd_theme
+}
+
+plot_top20(data, total_incidents, "Incidents")
+plot_top20(data, total_mort, "Mortalities")

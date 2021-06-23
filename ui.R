@@ -29,6 +29,7 @@ sidebar <- dashboardSidebar( width = 350,
         "Year" = "year",
         "Poison type" = "poison_family",
         "Poison reason" = "poison_reason",
+        "Top 20 species" = "vernacularname",
         "Animal group" = "taxa"
       ),
       selected = "country"
