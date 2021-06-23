@@ -137,8 +137,8 @@ server <- function(input, output, session) {
         plot_top20(query_data(), .data[[input$y_choice]], ylab_plot())
       }
     },
-    height = 500,
-    width = 700
+    height = 600,
+    width = 850
   )
 
   ## Download country plot ----

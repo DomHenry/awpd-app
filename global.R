@@ -5,6 +5,7 @@ library(glue)
 library(shinydashboard)
 library(DBI)
 library(RPostgres)
+library(shinyjs)
 
 # Create a connection to the database -------------------------------------
 con <- DBI::dbConnect(RPostgres::Postgres(),

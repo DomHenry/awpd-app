@@ -15,14 +15,16 @@ header <- dashboardHeader(
 
 
 # Side bar ----------------------------------------------------------------
-sidebar <- dashboardSidebar( width = 350,
-                             tags$head(
-                               tags$style(HTML("
+sidebar <- dashboardSidebar(
+  width = 350,
+  useShinyjs(),
+  tags$head(
+    tags$style(HTML("
                       .sidebar { height: 90vh; overflow-y: auto; }
                       "))
-                             ),
+  ),
   sidebarMenu(
-      selectInput(
+    selectInput(
       inputId = "baseplot", label = "Choose base plot",
       choices = c(
         "Country" = "country",
@@ -43,11 +45,10 @@ sidebar <- dashboardSidebar( width = 350,
       selected = NULL, inline = TRUE
     ),
     sliderInput("year_slider",
-                label = "Date range",
-                min = list_year_start, max = list_year_end,
-                value = c(list_year_start, list_year_end),
-                sep = "", step = 1
-
+      label = "Date range",
+      min = list_year_start, max = list_year_end,
+      value = c(list_year_start, list_year_end),
+      sep = "", step = 1
     ),
     radioButtons(
       inputId = "gltca_choice", label = "Data tag",
@@ -67,22 +68,22 @@ sidebar <- dashboardSidebar( width = 350,
       )
     ),
 
-      selectizeInput(
-        inputId = "species_choice", label = "Species",
-        choices = list(
-          `Vultures` = wp_data %>% filter(taxa == "Vulture") %>% pull(vernacularname) %>% unique() %>% sort(),
-          `Birds` = wp_data %>% filter(taxa == "Bird") %>% pull(vernacularname) %>% unique() %>% sort(),
-          `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
-          `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort(),
-          `Fish` = wp_data %>% filter(taxa == "Fish") %>% pull(vernacularname) %>% unique() %>% sort(),
-          `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort()
-        ),
-        selected = NULL,
-        multiple = TRUE,
-        options = list(
-          placeholder = "All species selected"
-        )
+    selectizeInput(
+      inputId = "species_choice", label = "Species",
+      choices = list(
+        `Vultures` = wp_data %>% filter(taxa == "Vulture") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Birds` = wp_data %>% filter(taxa == "Bird") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Fish` = wp_data %>% filter(taxa == "Fish") %>% pull(vernacularname) %>% unique() %>% sort(),
+        `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort()
       ),
+      selected = NULL,
+      multiple = TRUE,
+      options = list(
+        placeholder = "All species selected"
+      )
+    ),
 
     selectizeInput(
       inputId = "poison_choice", label = "Poison type",
@@ -102,9 +103,17 @@ sidebar <- dashboardSidebar( width = 350,
         placeholder = "All reasons selected"
       )
     )
-    )
   )
 
+)
+
+# absolutePanel(
+#   id = "test", class = "panel panel-default",
+#   fixed = TRUE, draggable = FALSE,
+#   top = 475, right = "auto", left = 200, bottom = "auto",
+#   width = 0, height = 0,
+#   actionButton("reset1", label = NULL, icon = icon("rotate-left", lib = "font-awesome"))
+# )
 
 # Body --------------------------------------------------------------------
 
@@ -131,8 +140,8 @@ body <- dashboardBody(
         width = NULL,
         status = "primary",
         solidHeader = TRUE, color = "green",
-        height = "600px",
-        plotOutput("plot", height = 400)
+        height = "700px",
+        plotOutput("plot", width = "auto")
       ),
       div(
         id = "clearcontroldiv",
@@ -160,14 +169,14 @@ body <- dashboardBody(
       valueBox(
         subtitle = "Total mortalities",
         value = sum(wp_data$mortality),
-        icon = NULL,
+        icon = icon("database", lib = "font-awesome"),
         width = 10,
         color = "orange"
       ),
       valueBox(
         subtitle = "Total poisoning incidents",
         value = length(unique(wp_data$global_id)),
-        icon = NULL,
+        icon = icon("skull-crossbones", lib = "font-awesome"),
         width = 10,
         color = "yellow"
       ),
@@ -176,7 +185,7 @@ body <- dashboardBody(
         value = wp_data %>%
           filter(str_detect(vernacularname, "Vulture")) %>%
           summarise(vult_mort_total = sum(mortality)),
-        icon = NULL,
+        icon = icon("feather", lib = "font-awesome"),
         width = 10,
         color = "red"
       )
@@ -191,4 +200,3 @@ ui <- dashboardPage(
   body,
   skin = "blue"
 )
-
