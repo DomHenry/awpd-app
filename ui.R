@@ -141,23 +141,59 @@ body <- dashboardBody(
         status = "primary",
         solidHeader = TRUE, color = "green",
         height = "700px",
+        br(),
         plotOutput("plot", width = "auto")
       ),
       div(
         id = "clearcontroldiv",
         absolutePanel(
-          id = "clear_control", class = "panel panel-default",
+          id = "abspan1", class = "panel panel-default",
           fixed = FALSE, draggable = FALSE,
           top = 3, right = 20, left = "auto", bottom = "auto",
           width = "auto", height = "auto",
-          actionButton("reset_plot", "Reset all values")
+          actionButton("reset_poison_reason", "Poison reason", icon = icon("rotate-left", lib = "font-awesome"))
         ),
         div(
           id = "downloadplotdiv",
           absolutePanel(
-            id = "clear_control", class = "panel panel-default",
+            id = "abspan2", class = "panel panel-default",
             fixed = FALSE, draggable = FALSE,
-            top = 3, right = 150, left = "auto", bottom = "auto",
+            top = 3, right = 155, left = "auto", bottom = "auto",
+            width = "auto", height = "auto",
+            actionButton("reset_poison_type", "Poison type", icon = icon("rotate-left", lib = "font-awesome"))
+          ),
+          absolutePanel(
+            id = "abspan2", class = "panel panel-default",
+            fixed = FALSE, draggable = FALSE,
+            top = 3, right = 275, left = "auto", bottom = "auto",
+            width = "auto", height = "auto",
+            actionButton("reset_species", "Species", icon = icon("rotate-left", lib = "font-awesome"))
+          ),
+          absolutePanel(
+            id = "abspan3", class = "panel panel-default",
+            fixed = FALSE, draggable = FALSE,
+            top = 3, right = 370, left = "auto", bottom = "auto",
+            width = "auto", height = "auto",
+            actionButton("reset_country", "Country", icon = icon("rotate-left", lib = "font-awesome"))
+          ),
+          absolutePanel(
+            id = "abspan4", class = "panel panel-default",
+            fixed = FALSE, draggable = FALSE,
+            top = 3, right = 470, left = "auto", bottom = "auto",
+            width = "auto", height = "auto",
+            actionButton("reset_date", "Date", icon = icon("rotate-left", lib = "font-awesome"))
+          ),
+          absolutePanel(
+            id = "abspan5", class = "panel panel-default",
+            fixed = FALSE, draggable = FALSE,
+            top = 3, right = 550, left = "auto", bottom = "auto",
+            width = "auto", height = "auto",
+            actionButton("reset_plot", "All inputs", icon = icon("rotate-left", lib = "font-awesome"))
+          ),
+          absolutePanel(
+            id = "abspan6", class = "panel panel-default",
+            fixed = FALSE, draggable = FALSE,
+            top = 655, right = 865, left = "auto", bottom = "auto",
             width = "auto", height = "auto",
             downloadButton("download_plot", "Download plot")
           )
