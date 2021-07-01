@@ -7,6 +7,7 @@ library(DBI)
 library(RPostgres)
 library(shinyjs)
 
+# 2021-07-01
 # Create a connection to the database -------------------------------------
 con <- DBI::dbConnect(RPostgres::Postgres(),
                       dbname = "poisondb",
