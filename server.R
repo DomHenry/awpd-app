@@ -220,6 +220,8 @@ server <- function(input, output, session) {
           plot_reason(query_data(), .data[[input$y_choice]], ylab_plot())
         } else if (input$baseplot == "vernacularname") {
           plot_top20(query_data(), .data[[input$y_choice]], ylab_plot())
+        } else if (input$baseplot == "taxa") {
+          plot_animal(query_data(), .data[[input$y_choice]], ylab_plot())
         },
         width = 10, height = 8
       )
