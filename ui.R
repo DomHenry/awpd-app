@@ -5,7 +5,7 @@ library(shinythemes)
 library(glue)
 library(shinydashboard)
 library(DT)
-
+library(shinyBS)
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader(
@@ -13,14 +13,13 @@ header <- dashboardHeader(
   titleWidth = 400
 )
 
-
 # Side bar ----------------------------------------------------------------
 sidebar <- dashboardSidebar(
   width = 350,
   useShinyjs(),
   tags$head(
     tags$style(HTML("
-                      .sidebar { height: 90vh; overflow-y: auto; }
+                      .sidebar { height: 95vh; overflow-y: auto; }
                       "))
   ),
   sidebarMenu(
@@ -58,53 +57,92 @@ sidebar <- dashboardSidebar(
       ),
       selected = "ALL", inline = TRUE
     ),
-    selectizeInput(
-      inputId = "country_choice", label = "Country",
-      choices = list_countries,
-      selected = NULL,
-      multiple = TRUE,
-      options = list(
-        placeholder = "All countries selected"
-      )
-    ),
 
-    selectizeInput(
-      inputId = "species_choice", label = "Species",
-      choices = list(
-        `Vultures` = wp_data %>% filter(taxa == "Vulture") %>% pull(vernacularname) %>% unique() %>% sort(),
-        `Birds` = wp_data %>% filter(taxa == "Bird") %>% pull(vernacularname) %>% unique() %>% sort(),
-        `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
-        `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort(),
-        `Fish` = wp_data %>% filter(taxa == "Fish") %>% pull(vernacularname) %>% unique() %>% sort(),
-        `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort()
+    bsTooltip("gltca_choice", "This button filters the data to only include records collected in the Great Limpopo Transfrontier Conservation Area (GLTCA) which includes South Africa, Mozambique, and Zimbabwe.",
+              "bottom", options = list(container = "body"))
+    ,
+
+    fluidRow(
+      div(
+        style = "display: inline-block;vertical-align:top; width:280px;  padding: 1px 10px",
+        selectizeInput(
+          inputId = "country_choice", label = "Country",
+          choices = list_countries,
+          selected = NULL,
+          multiple = TRUE,
+          options = list(
+            placeholder = "All countries selected"
+          )
+        )
       ),
-      selected = NULL,
-      multiple = TRUE,
-      options = list(
-        placeholder = "All species selected"
+      div(
+        style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
+        actionButton("reset_country", "", icon = icon("rotate-left", lib = "font-awesome"))
+      )
+    ),
+    fluidRow(
+      div(
+        style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
+        selectizeInput(
+          inputId = "species_choice", label = "Species",
+          choices = list(
+            `Vultures` = wp_data %>% filter(taxa == "Vulture") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Birds` = wp_data %>% filter(taxa == "Bird") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Fish` = wp_data %>% filter(taxa == "Fish") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort()
+          ),
+          selected = NULL,
+          multiple = TRUE,
+          options = list(
+            placeholder = "All species selected"
+          )
+        )
+      ),
+      div(
+        style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
+        actionButton("reset_species", "", icon = icon("rotate-left", lib = "font-awesome"))
+      )
+    ),
+    fluidRow(
+      div(
+        style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
+        selectizeInput(
+          inputId = "poison_choice", label = "Poison type",
+          choices = list_poisons,
+          selected = NULL,
+          multiple = TRUE,
+          options = list(
+            placeholder = "All types selected"
+          )
+        )
+      ),
+      div(
+        style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
+        actionButton("reset_poison_type", "", icon = icon("rotate-left", lib = "font-awesome"))
       )
     ),
 
-    selectizeInput(
-      inputId = "poison_choice", label = "Poison type",
-      choices = list_poisons,
-      selected = NULL,
-      multiple = TRUE,
-      options = list(
-        placeholder = "All types selected"
-      )
-    ),
-    selectizeInput(
-      inputId = "reason_choice", label = "Poison reason",
-      choices = list_reason,
-      selected = NULL,
-      multiple = TRUE,
-      options = list(
-        placeholder = "All reasons selected"
+    fluidRow(
+      div(
+        style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
+        selectizeInput(
+          inputId = "reason_choice", label = "Poison reason",
+          choices = list_reason,
+          selected = NULL,
+          multiple = TRUE,
+          options = list(
+            placeholder = "All reasons selected"
+          )
+        )
+      ),
+      div(
+        style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
+        actionButton("reset_poison_reason", "", icon = icon("rotate-left", lib = "font-awesome"))
       )
     )
   )
-
 )
 
 # absolutePanel(
@@ -116,7 +154,6 @@ sidebar <- dashboardSidebar(
 # )
 
 # Body --------------------------------------------------------------------
-
 body <- dashboardBody(
   tags$style(HTML("
                   .box.box-solid.box-primary>.box-header {
@@ -132,6 +169,12 @@ body <- dashboardBody(
                   }
 
                   ")),
+  img(src = 'logo_combined.png', height = "100px"),
+  tags$br(),
+  "This app provides summary graphs of the data held in the African Wildlife Poisoning Database.",
+  tags$br(),
+  tags$p("For more information please visit ",a("https://africanwildlifepoisoning.org", href = "https://africanwildlifepoisoning.org")),
+  tags$br(),
   fluidRow(
     column(
       width = 9,
@@ -144,59 +187,21 @@ body <- dashboardBody(
         br(),
         plotOutput("plot", width = "auto")
       ),
+
       div(
-        id = "clearcontroldiv",
         absolutePanel(
-          id = "abspan1", class = "panel panel-default",
+          id = "abspan5", class = "panel panel-default",
+          fixed = FALSE, draggable = FALSE,
+          top = 3, right = 155, left = "auto", bottom = "auto",
+          width = "auto", height = "auto",
+          actionButton("reset_plot", "All inputs", icon = icon("rotate-left", lib = "font-awesome"))
+        ),
+        absolutePanel(
+          id = "abspan6", class = "panel panel-default",
           fixed = FALSE, draggable = FALSE,
           top = 3, right = 20, left = "auto", bottom = "auto",
           width = "auto", height = "auto",
-          actionButton("reset_poison_reason", "Poison reason", icon = icon("rotate-left", lib = "font-awesome"))
-        ),
-        div(
-          id = "downloadplotdiv",
-          absolutePanel(
-            id = "abspan2", class = "panel panel-default",
-            fixed = FALSE, draggable = FALSE,
-            top = 3, right = 155, left = "auto", bottom = "auto",
-            width = "auto", height = "auto",
-            actionButton("reset_poison_type", "Poison type", icon = icon("rotate-left", lib = "font-awesome"))
-          ),
-          absolutePanel(
-            id = "abspan2", class = "panel panel-default",
-            fixed = FALSE, draggable = FALSE,
-            top = 3, right = 275, left = "auto", bottom = "auto",
-            width = "auto", height = "auto",
-            actionButton("reset_species", "Species", icon = icon("rotate-left", lib = "font-awesome"))
-          ),
-          absolutePanel(
-            id = "abspan3", class = "panel panel-default",
-            fixed = FALSE, draggable = FALSE,
-            top = 3, right = 370, left = "auto", bottom = "auto",
-            width = "auto", height = "auto",
-            actionButton("reset_country", "Country", icon = icon("rotate-left", lib = "font-awesome"))
-          ),
-          absolutePanel(
-            id = "abspan4", class = "panel panel-default",
-            fixed = FALSE, draggable = FALSE,
-            top = 3, right = 470, left = "auto", bottom = "auto",
-            width = "auto", height = "auto",
-            actionButton("reset_date", "Date", icon = icon("rotate-left", lib = "font-awesome"))
-          ),
-          absolutePanel(
-            id = "abspan5", class = "panel panel-default",
-            fixed = FALSE, draggable = FALSE,
-            top = 3, right = 550, left = "auto", bottom = "auto",
-            width = "auto", height = "auto",
-            actionButton("reset_plot", "All inputs", icon = icon("rotate-left", lib = "font-awesome"))
-          ),
-          absolutePanel(
-            id = "abspan6", class = "panel panel-default",
-            fixed = FALSE, draggable = FALSE,
-            top = 655, right = 865, left = "auto", bottom = "auto",
-            width = "auto", height = "auto",
-            downloadButton("download_plot", "Download plot")
-          )
+          downloadButton("download_plot", "Download plot")
         )
       )
     ),
