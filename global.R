@@ -211,7 +211,13 @@ data <- wp_data %>%
 
 data %>%
   arrange(desc(total_mort)) %>%
+  ungroup() %>%
   top_n(20)
+
+data %>%
+  arrange(desc(total_mort)) %>%
+  ungroup() %>%
+  filter(row_number() %in% 1:20)
 
 data %>%
   arrange(desc(total_incidents))
@@ -219,7 +225,7 @@ data %>%
 plot_top20 <- function(data, y_choice, ylab){
   data %>%
     arrange(desc({{y_choice}})) %>%
-    top_n(20) %>%
+    filter(row_number() %in% 1:20) %>%
     ggplot(aes(x = reorder(vernacularname, {{y_choice}}),
                y = {{y_choice}}))+
     geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
