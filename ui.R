@@ -19,8 +19,8 @@ sidebar <- dashboardSidebar(
   useShinyjs(),
   tags$head(
     tags$style(HTML("
-                      .sidebar { height: 95vh; overflow-y: auto; }
-                      "))
+                      .sidebar {height: 110vh; overflow-y: auto; overflow-x: hidden}
+                      ")) # adding position: fixed works but messes up the scroll bar position
   ),
   sidebarMenu(
     selectInput(
@@ -155,6 +155,7 @@ sidebar <- dashboardSidebar(
 
 # Body --------------------------------------------------------------------
 body <- dashboardBody(
+  tags$head(tags$style("body {overflow-y: scroll;}")),
   tags$style(HTML("
                   .box.box-solid.box-primary>.box-header {
                   color:#fff;
@@ -169,15 +170,46 @@ body <- dashboardBody(
                   }
 
                   ")),
-  img(src = 'logo_combined.png', height = "100px"),
-  tags$br(),
-  "This app provides summary graphs of the data held in the African Wildlife Poisoning Database.",
-  tags$br(),
-  tags$p("For more information please visit ",a("https://africanwildlifepoisoning.org", href = "https://africanwildlifepoisoning.org")),
-  tags$br(),
+  fluidRow(
+    column(width = 7,
+           style = "padding-top:10px",
+           img(src = 'logo_combined.png', height = "100px")
+           ),
+    column(width = 5,
+           splitLayout(
+           valueBox(
+             subtitle = HTML("Total <br> mortalities"),
+             value = sum(wp_data$mortality),
+             icon = icon("database", lib = "font-awesome"),
+             width = NULL,
+             color = "orange"
+           ),
+           valueBox(
+             subtitle = HTML("Total poisoning <br> incidents"),
+             value = length(unique(wp_data$global_id)),
+             icon = icon("skull-crossbones", lib = "font-awesome"),
+             width = NULL,
+             color = "yellow"
+           ),
+           valueBox(
+             subtitle = HTML("Total vulture <br> mortalities"),
+             value = wp_data %>%
+               filter(str_detect(vernacularname, "Vulture")) %>%
+               summarise(vult_mort_total = sum(mortality)),
+             icon = icon("feather", lib = "font-awesome"),
+             width = NULL,
+             color = "red"
+           ),
+           cellWidths = c(150,150,150),
+           cellArgs = list(style="padding: 0px")
+           )
+           )
+  ),
+  tags$h4("This app provides summary graphs of the data held in the African Wildlife Poisoning Database."),
+  tags$h4("For more information please visit ",a("https://africanwildlifepoisoning.org", href = "https://africanwildlifepoisoning.org"), style = "padding-bottom: 15px"),
   fluidRow(
     column(
-      width = 9,
+      width = 12,
       box(
         title = "",
         width = NULL,
@@ -205,32 +237,7 @@ body <- dashboardBody(
         )
       )
     ),
-    column(
-      width = 3,
-      valueBox(
-        subtitle = "Total mortalities",
-        value = sum(wp_data$mortality),
-        icon = icon("database", lib = "font-awesome"),
-        width = 10,
-        color = "orange"
-      ),
-      valueBox(
-        subtitle = "Total poisoning incidents",
-        value = length(unique(wp_data$global_id)),
-        icon = icon("skull-crossbones", lib = "font-awesome"),
-        width = 10,
-        color = "yellow"
-      ),
-      valueBox(
-        subtitle = "Total vulture mortalities",
-        value = wp_data %>%
-          filter(str_detect(vernacularname, "Vulture")) %>%
-          summarise(vult_mort_total = sum(mortality)),
-        icon = icon("feather", lib = "font-awesome"),
-        width = 10,
-        color = "red"
-      )
-    )
+    column(width = 1)
   )
 )
 
