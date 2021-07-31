@@ -85,6 +85,27 @@ awpd_theme <- theme_bw()+
 bar_fill <- alpha("grey", 0.8)
 bar_col <- "black"
 
+
+# Function to calculate y-axis limits -------------------------------------
+
+## Allows the geom_text on the largest values to render correctly
+calc_ylim <- function(x){
+
+  if (x > 17000){
+    return(x + 2000)
+  } else if (x > 14000 & x < 17000){
+    return(x + 1000)
+  } else if (x > 10000 & x < 14000){
+    return(x + 800)
+  } else if (x > 3000 & x < 10000){
+    return(x + 500)
+  } else if (x < 3000){
+    return(x + 200)
+    }
+}
+
+calc_ylim(3500)
+
 # Country figure ----------------------------------------------------------
 data <- wp_data %>%
   filter(country %in% sample(list_countries, 10)) %>%
@@ -102,15 +123,19 @@ data <- wp_data %>%
   summarise(total_mort = sum(mortality),
             total_incidents = length(unique(global_id)))
 
-
 plot_country <- function(data, y_choice, ylab){
+
+  max_val <- data %>% select({{y_choice}}) %>% pull() %>% max
+
   data %>%
     ggplot(aes(x = reorder(country, {{y_choice}}),
                y = {{y_choice}}))+
     geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
+    geom_text(aes(label = {{y_choice}}), hjust = -0.5)+
     xlab("")+
     ylab(ylab)+
     coord_flip()+
+    ylim(0, calc_ylim(max_val))+
     awpd_theme
 }
 
@@ -124,13 +149,18 @@ data <- wp_data %>%
             total_incidents = length(unique(global_id)))
 
 plot_poison <- function(data, y_choice, ylab){
+
+  max_val <- data %>% select({{y_choice}}) %>% pull() %>% max
+
   data %>%
     ggplot(aes(x = reorder(poison_family, {{y_choice}}),
                y = {{y_choice}}))+
     geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
+    geom_text(aes(label = {{y_choice}}), hjust = -0.5)+
     xlab("")+
     ylab(ylab)+
     coord_flip()+
+    ylim(0, calc_ylim(max_val))+
     awpd_theme
 }
 
@@ -144,14 +174,19 @@ data <- wp_data %>%
             total_incidents = length(unique(global_id)))
 
 plot_reason <- function(data, y_choice, ylab){
-  data %>%
+
+  max_val <- data %>% select({{y_choice}}) %>% pull() %>% max
+
+   data %>%
     ggplot(aes(x = reorder(poison_reason, {{y_choice}}),
                y = {{y_choice}}))+
     geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
+    geom_text(aes(label = {{y_choice}}), hjust = -0.5)+
     xlab("")+
     ylab(ylab)+
     coord_flip()+
     theme_bw()+
+    ylim(0, calc_ylim(max_val))+
     awpd_theme
 }
 
@@ -165,14 +200,19 @@ data <- wp_data %>%
             total_incidents = length(unique(global_id)))
 
 plot_year <- function(data, y_choice, ylab){
+
+  max_val <- data %>% select({{y_choice}}) %>% pull() %>% max
+
   data %>%
     ggplot(aes(x = year,
                y = {{y_choice}}))+
     geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
+    geom_text(aes(label = {{y_choice}}, angle = 90), hjust = -0.1)+
     # coord_flip()+
     xlab("")+
     ylab(ylab)+
     theme_bw()+
+    ylim(0, calc_ylim(max_val))+
     awpd_theme
 }
 
@@ -186,14 +226,19 @@ data <- wp_data %>%
             total_incidents = length(unique(global_id)))
 
 plot_animal <- function(data, y_choice, ylab){
+
+  max_val <- data %>% select({{y_choice}}) %>% pull() %>% max
+
   data %>%
     ggplot(aes(x = reorder(taxa, {{y_choice}}),
                y = {{y_choice}}))+
     geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
+    geom_text(aes(label = {{y_choice}}), hjust = -0.5)+
     coord_flip()+
     xlab("")+
     ylab(ylab)+
     theme_bw()+
+    ylim(0, calc_ylim(max_val))+
     awpd_theme
 }
 
@@ -224,16 +269,21 @@ data %>%
   arrange(desc(total_incidents))
 
 plot_top20 <- function(data, y_choice, ylab){
+
+  max_val <- data %>% select({{y_choice}}) %>% pull() %>% max
+
   data %>%
     arrange(desc({{y_choice}})) %>%
     filter(row_number() %in% 1:20) %>%
     ggplot(aes(x = reorder(vernacularname, {{y_choice}}),
                y = {{y_choice}}))+
     geom_bar(stat = "identity", fill = bar_fill, color = bar_col)+
+    geom_text(aes(label = {{y_choice}}), hjust = -0.5)+
     coord_flip()+
     xlab("")+
     ylab(ylab)+
     theme_bw()+
+    ylim(0, calc_ylim(max_val))+
     awpd_theme
 }
 
