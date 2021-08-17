@@ -206,7 +206,9 @@ body <- dashboardBody(
            )
   ),
   tags$h4("This app provides summary graphs of the data held in the African Wildlife Poisoning Database."),
-  tags$h4("For more information please visit ",a("https://africanwildlifepoisoning.org", href = "https://africanwildlifepoisoning.org"), style = "padding-bottom: 15px"),
+  tags$h4("For more information please visit ", a("https://africanwildlifepoisoning.org",
+                                                 href = "https://africanwildlifepoisoning.org"),
+          style = "padding-bottom: 15px"),
   fluidRow(
     column(
       width = 12,
@@ -219,7 +221,7 @@ body <- dashboardBody(
         br(),
         plotOutput("plot", width = "auto")
       ),
-
+      tags$p(tags$b("DISCLAIMER:"), "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality the actual number of incidents and mortalities are likely to be higher than those presented here, particularly in countries with low reporting rates."),
       div(
         absolutePanel(
           id = "abspan5", class = "panel panel-default",
