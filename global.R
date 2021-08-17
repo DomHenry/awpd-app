@@ -99,12 +99,15 @@ calc_ylim <- function(x){
     return(x + 800)
   } else if (x > 3000 & x < 10000){
     return(x + 500)
-  } else if (x < 3000){
-    return(x + 200)
+  } else if (x > 1000 & x < 3000){
+    return(x + 500)
+  } else if (x < 1000){
+    return(x + 50)
     }
 }
 
 calc_ylim(3500)
+calc_ylim(400)
 
 # Country figure ----------------------------------------------------------
 data <- wp_data %>%
@@ -221,6 +224,8 @@ plot_year(data, total_mort, "Mortalities")
 
 # Animal group figure -----------------------------------------------------
 data <- wp_data %>%
+  mutate(taxa = case_when(is.na(taxa) ~ "Unknown",
+                          TRUE ~ as.character(taxa))) %>%
   group_by(taxa) %>% # Taxon, decade,
   summarise(total_mort = sum(mortality),
             total_incidents = length(unique(global_id)))
