@@ -165,6 +165,8 @@ server <- function(input, output, session) {
   ## Data frame query ----
   query_data <- reactive({
     wp_data %>%
+      mutate(taxa = case_when(is.na(taxa) ~ "Unknown",
+                              TRUE ~ as.character(taxa))) %>%
       filter(if (input$gltca_choice == "GLTFCA") tag == "GLTFCA" else tag %in% c("ALL", "GLTFCA")) %>%
       filter(country %in% values$country_choice) %>%
       filter(vernacularname %in% values$species_choice) %>%
