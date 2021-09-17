@@ -25,7 +25,7 @@ sidebar <- dashboardSidebar(
   useShinyjs(),
   tags$head(
     tags$style(HTML("
-                      .sidebar {height: 110vh; overflow-y: auto; overflow-x: hidden}
+                      .sidebar {height: 140vh; overflow-y: auto; overflow-x: hidden}
                       ")) # adding position: fixed works but messes up the scroll bar position
   ),
   sidebarMenu(
