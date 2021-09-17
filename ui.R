@@ -6,6 +6,12 @@ library(glue)
 library(shinydashboard)
 library(DT)
 library(shinyBS)
+library(RPostgres)
+library(shinyjs)
+library(DBI)
+
+source("src/01_import data.R")
+source("src/02_plot & helper functions.R")
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader(
@@ -28,17 +34,17 @@ sidebar <- dashboardSidebar(
       choices = c(
         "Country" = "country",
         "Year" = "year",
+        "Animal group" = "taxa",
+        "Species" = "vernacularname",
         "Poison type" = "poison_family",
-        "Poison reason" = "poison_reason",
-        "Top 20 species" = "vernacularname",
-        "Animal group" = "taxa"
+        "Poison reason" = "poison_reason"
       ),
       selected = "country"
     ),
     radioButtons(
       inputId = "y_choice", label = "Display",
       choices = c(
-        "Mortalties" = "total_mort",
+        "Mortalities" = "total_mort",
         "Incidents" = "total_incidents"
       ),
       selected = NULL, inline = TRUE
@@ -84,14 +90,38 @@ sidebar <- dashboardSidebar(
       div(
         style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
         selectizeInput(
+          inputId = "animal_group_choice", label = "Animal group",
+          choices = list_taxa,
+          selected = NULL,
+          multiple = TRUE,
+          options = list(
+            placeholder = "All types selected"
+          )
+        )
+      ),
+      div(
+        style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
+        actionButton("reset_animal_group", "", icon = icon("rotate-left", lib = "font-awesome"))
+      ),
+      bsTooltip("animal_group_choice", "Note when using species base plot: In the case where there are more than 20 species within a group only the top 20 (in terms of mortality or incidents) will be plotted",
+                "top", options = list(container = "body"))
+
+
+    ),
+    fluidRow(
+      div(
+        style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
+        selectizeInput(
           inputId = "species_choice", label = "Species",
           choices = list(
             `Vultures` = wp_data %>% filter(taxa == "Vulture") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Birds` = wp_data %>% filter(taxa == "Bird") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Bird (excl raptors)` = wp_data %>% filter(taxa == "Bird (excl raptors)") %>% pull(vernacularname) %>% unique() %>% sort(),
             `Fish` = wp_data %>% filter(taxa == "Fish") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort()
+            `Amphibians` = wp_data %>% filter(taxa == "Amphibian") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Raptors` = wp_data %>% filter(taxa == "Raptors") %>% pull(vernacularname) %>% unique() %>% sort(),
+            `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort()
           ),
           selected = NULL,
           multiple = TRUE,
@@ -194,7 +224,7 @@ body <- dashboardBody(
            valueBox(
              subtitle = HTML("Total vulture <br> mortalities"),
              value = wp_data %>%
-               filter(str_detect(vernacularname, "Vulture")) %>%
+               filter(str_detect(vernacularname, "Vulture|Griffon")) %>%
                summarise(vult_mort_total = sum(mortality)),
              icon = icon("feather", lib = "font-awesome"),
              width = NULL,
@@ -209,6 +239,8 @@ body <- dashboardBody(
   tags$h4("For more information please visit ", a("https://africanwildlifepoisoning.org",
                                                  href = "https://africanwildlifepoisoning.org"),
           style = "padding-bottom: 15px"),
+  tags$p(tags$b("DISCLAIMER:"), "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality the actual number of incidents and mortalities are likely to be higher than those presented here, particularly in countries with low reporting rates.",
+         style = "padding-bottom: 15px"),
   fluidRow(
     column(
       width = 12,
@@ -221,8 +253,7 @@ body <- dashboardBody(
         br(),
         plotOutput("plot", width = "auto")
       ),
-      tags$p(tags$b("DISCLAIMER:"), "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality the actual number of incidents and mortalities are likely to be higher than those presented here, particularly in countries with low reporting rates."),
-      div(
+    div(
         absolutePanel(
           id = "abspan5", class = "panel panel-default",
           fixed = FALSE, draggable = FALSE,

@@ -6,20 +6,28 @@ server <- function(input, output, session) {
     country_choice = list_countries,
     species_choice = list_species,
     poison_choice = list_poisons,
-    reason_choice = list_reason
+    reason_choice = list_reason,
+    animal_group_choice = list_taxa
   )
 
   observeEvent(input$country_choice, {
     values$country_choice <- input$country_choice
   })
+
   observeEvent(input$species_choice, {
     values$species_choice <- input$species_choice
   })
+
   observeEvent(input$poison_choice, {
     values$poison_choice <- input$poison_choice
   })
+
   observeEvent(input$reason_choice, {
     values$reason_choice <- input$reason_choice
+  })
+
+  observeEvent(input$animal_group_choice, {
+    values$animal_group_choice <- input$animal_group_choice
   })
 
   observeEvent(input$reset_plot, {
@@ -27,6 +35,7 @@ server <- function(input, output, session) {
     values$species_choice <- list_species
     values$poison_choice <- list_poisons
     values$reason_choice <- list_reason
+    values$animal_group_choice <- list_taxa
 
     updateSelectizeInput(session,
       inputId = "country_choice", label = NULL, choices = list_countries,
@@ -47,6 +56,14 @@ server <- function(input, output, session) {
         placeholder = "All species selected"
       )
     )
+
+    updateSelectizeInput(session,
+                         inputId = "animal_group_choice", label = NULL, choices = list_taxa,
+                         selected = NULL, options = list(
+                           placeholder = "All types selected"
+                         )
+    )
+
     updateSelectizeInput(session,
       inputId = "poison_choice", label = NULL, choices = list_poisons,
       selected = NULL, options = list(
@@ -90,15 +107,25 @@ server <- function(input, output, session) {
       choices = c(
         "Country" = "country",
         "Year" = "year",
+        "Animal group" = "taxa",
+        "Species" = "vernacularname",
         "Poison type" = "poison_family",
-        "Poison reason" = "poison_reason",
-        "Top 20 species" = "vernacularname",
-        "Animal group" = "taxa"
+        "Poison reason" = "poison_reason"
       ),
       selected = "country"
     )
   })
 
+  observeEvent(input$reset_animal_group, {
+    values$animal_group_choice <- list_taxa
+
+    updateSelectizeInput(session,
+                         inputId = "animal_group_choice", label = NULL, choices = list_taxa,
+                         selected = NULL, options = list(
+                           placeholder = "All types selected"
+                         )
+    )
+  })
 
   observeEvent(input$reset_poison_type, {
     values$poison_choice <- list_poisons
@@ -160,19 +187,18 @@ server <- function(input, output, session) {
     )
   })
 
-
-
   ## Data frame query ----
   query_data <- reactive({
     wp_data %>%
       mutate(taxa = case_when(is.na(taxa) ~ "Unknown",
                               TRUE ~ as.character(taxa))) %>%
-      filter(if (input$gltca_choice == "GLTFCA") tag == "GLTFCA" else tag %in% c("ALL", "GLTFCA")) %>%
-      filter(country %in% values$country_choice) %>%
-      filter(vernacularname %in% values$species_choice) %>%
-      filter(poison_family %in% values$poison_choice) %>%
-      filter(poison_reason %in% values$reason_choice) %>%
-      filter(year %in% c(min(input$year_slider):max(input$year_slider))) %>%
+      filter(if (input$gltca_choice == "GLTFCA") tag == "GLTFCA" else tag %in% c("ALL", "GLTFCA", "Lowveld")) %>% # FINE
+      filter(country %in% values$country_choice) %>% # FINE
+      filter(vernacularname %in% values$species_choice) %>% # FINE
+      filter(poison_family %in% values$poison_choice) %>% # FINE
+      filter(poison_reason %in% values$reason_choice) %>% # FINE
+      filter(taxa %in% values$animal_group_choice) %>% # FINE
+      filter(year %in% c(min(input$year_slider):max(input$year_slider))) %>% # FINE
       group_by(.data[[input$baseplot]]) %>%
       summarise(
         total_mort = sum(mortality),
@@ -198,7 +224,7 @@ server <- function(input, output, session) {
       } else if (input$baseplot == "taxa") {
         plot_animal(query_data(), .data[[input$y_choice]], ylab_plot())
       } else if (input$baseplot == "vernacularname") {
-        plot_top20(query_data(), .data[[input$y_choice]], ylab_plot())
+        plot_species(query_data(), .data[[input$y_choice]], ylab_plot())
       }
     },
     height = 580,
@@ -221,7 +247,7 @@ server <- function(input, output, session) {
         } else if (input$baseplot == "poison_reason") {
           plot_reason(query_data(), .data[[input$y_choice]], ylab_plot())
         } else if (input$baseplot == "vernacularname") {
-          plot_top20(query_data(), .data[[input$y_choice]], ylab_plot())
+          plot_species(query_data(), .data[[input$y_choice]], ylab_plot())
         } else if (input$baseplot == "taxa") {
           plot_animal(query_data(), .data[[input$y_choice]], ylab_plot())
         },
