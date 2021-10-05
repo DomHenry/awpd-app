@@ -259,7 +259,7 @@ body <- dashboardBody(
                       solidHeader = TRUE,
                       # height = "200px",
                       collapsible = TRUE,
-                      collapsed = TRUE,
+                      collapsed = FALSE,
                       tags$p("This app provides summary graphs of the data held in the African Wildlife Poisoning Database. The data have been collated
                       from direct observations, and various reports in the media and published literature. Domestic animals are only included
                       where they were poisoned in a wildlife poisoning incident. For more information please visit",
@@ -273,7 +273,7 @@ body <- dashboardBody(
                       solidHeader = TRUE,
                       # height = "200px",
                       collapsible = TRUE,
-                      collapsed = TRUE,
+                      collapsed = FALSE,
                       "To cite the graphs and data, please use: The Endangered Wildlife Trust and the
                       Peregrine Fund. yyyy. The African Wildlife Poisoning Database. Downloaded from www.awpd.cloud on yyyy-mm-dd")),
            column(width = 4,
@@ -283,7 +283,7 @@ body <- dashboardBody(
                       solidHeader = TRUE,
                       # height = "200px",
                       collapsible = TRUE,
-                      collapsed = TRUE,
+                      collapsed = FALSE,
                       "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality
                       the actual number of incidents and mortalities are likely to be higher than those presented here, particularly
                       in countries with low reporting rates."))),
