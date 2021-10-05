@@ -25,12 +25,12 @@ sidebar <- dashboardSidebar(
   useShinyjs(),
   tags$head(
     tags$style(HTML("
-                      .sidebar {height: 140vh; overflow-y: auto; overflow-x: hidden}
+                      .sidebar {height: 140vh; overflow-y: auto; overflow-x: hidden;}
                       ")) # adding position: fixed works but messes up the scroll bar position
   ),
   sidebarMenu(
     selectInput(
-      inputId = "baseplot", label = "Choose base plot",
+      inputId = "baseplot", label = tags$h4("1. Start by choosing a base plot"),
       choices = c(
         "Country" = "country",
         "Year" = "year",
@@ -41,6 +41,7 @@ sidebar <- dashboardSidebar(
       ),
       selected = "country"
     ),
+    tags$h4(HTML('&nbsp;'),HTML('&nbsp;'),"2. Adjust base plot using the filters below"),
     radioButtons(
       inputId = "y_choice", label = "Display",
       choices = c(
@@ -103,7 +104,8 @@ sidebar <- dashboardSidebar(
         style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
         actionButton("reset_animal_group", "", icon = icon("rotate-left", lib = "font-awesome"))
       ),
-      bsTooltip("animal_group_choice", "Note when using species base plot: In the case where there are more than 20 species within a group only the top 20 (in terms of mortality or incidents) will be plotted",
+      bsTooltip("animal_group_choice", "Note when using species base plot: In the case where there are more
+                than 20 species within a group only the top 20 (in terms of mortality or incidents) will be plotted",
                 "top", options = list(container = "body"))
 
 
@@ -183,16 +185,31 @@ sidebar <- dashboardSidebar(
 #   actionButton("reset1", label = NULL, icon = icon("rotate-left", lib = "font-awesome"))
 # )
 
+
 # Body --------------------------------------------------------------------
 body <- dashboardBody(
-  tags$head(tags$style("body {overflow-y: scroll;}")),
+  tags$head(tags$style(
+    HTML('.wrapper {height: auto !important; position:relative; overflow-x:hidden; overflow-y:hidden}')
+  )),
   tags$style(HTML("
                   .box.box-solid.box-primary>.box-header {
+                  color:#fff;
+                  background:#6e9f57
+                  }
+
+                  .box.box-solid.box-primary{
+                  border-bottom-color:#6e9f57;
+                  border-left-color:#6e9f57;
+                  border-right-color:#6e9f57;
+                  border-top-color:#6e9f57;
+                  }
+
+                  .box.box-solid.box-success>.box-header {
                   color:#fff;
                   background:#666666
                   }
 
-                  .box.box-solid.box-primary{
+                  .box.box-solid.box-success{
                   border-bottom-color:#666666;
                   border-left-color:#666666;
                   border-right-color:#666666;
@@ -235,19 +252,48 @@ body <- dashboardBody(
            )
            )
   ),
-  tags$h4("This app provides summary graphs of the data held in the African Wildlife Poisoning Database."),
-  tags$h4("For more information please visit ", a("https://africanwildlifepoisoning.org",
-                                                 href = "https://africanwildlifepoisoning.org"),
-          style = "padding-bottom: 15px"),
-  tags$p(tags$b("DISCLAIMER:"), "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality the actual number of incidents and mortalities are likely to be higher than those presented here, particularly in countries with low reporting rates.",
-         style = "padding-bottom: 15px"),
+  fluidRow(column(width = 4,
+                  box(title = "About",
+                      width = NULL,
+                      status = "primary",
+                      solidHeader = TRUE,
+                      # height = "200px",
+                      collapsible = TRUE,
+                      collapsed = TRUE,
+                      tags$p("This app provides summary graphs of the data held in the African Wildlife Poisoning Database. The data have been collated
+                      from direct observations, and various reports in the media and published literature. Domestic animals are only included
+                      where they were poisoned in a wildlife poisoning incident. For more information please visit",
+                      a("https://africanwildlifepoisoning.org",
+                        href = "https://africanwildlifepoisoning.org"))
+                  )),
+           column(width = 4,
+                  box(title = "Citation",
+                      width = NULL,
+                      status = "primary",
+                      solidHeader = TRUE,
+                      # height = "200px",
+                      collapsible = TRUE,
+                      collapsed = TRUE,
+                      "To cite the graphs and data, please use: The Endangered Wildlife Trust and the
+                      Peregrine Fund. yyyy. The African Wildlife Poisoning Database. Downloaded from www.awpd.cloud on yyyy-mm-dd")),
+           column(width = 4,
+                  box(title = "Disclaimer",
+                      width = NULL,
+                      status = "primary",
+                      solidHeader = TRUE,
+                      # height = "200px",
+                      collapsible = TRUE,
+                      collapsed = TRUE,
+                      "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality
+                      the actual number of incidents and mortalities are likely to be higher than those presented here, particularly
+                      in countries with low reporting rates."))),
   fluidRow(
     column(
       width = 12,
       box(
-        title = "",
+        title = "Base plot",
         width = NULL,
-        status = "primary",
+        status = "success",
         solidHeader = TRUE, color = "green",
         height = "700px",
         br(),
