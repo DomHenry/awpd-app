@@ -15,7 +15,6 @@ library(DBI)
 ## Use this function to update Personal Access Token from GitHub
 # gitcreds::gitcreds_set()
 
-source("src/01_import data.R")
 source("src/02_plot & helper functions.R")
 
 # Header ------------------------------------------------------------------
