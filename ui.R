@@ -10,12 +10,40 @@ library(RPostgres)
 library(shinyjs)
 library(DBI)
 
-# DOCKER VERSION V2.1
+# DOCKER VERSION V2.2
 
 ## Use this function to update Personal Access Token from GitHub
 # gitcreds::gitcreds_set()
 
 source("src/02_plot & helper functions.R")
+
+appCSS1 <- "
+#loading-content1 {
+  position: absolute;
+  background: #FFFFFF;
+  opacity: 1;
+  z-index: 100;
+  left: 0;
+  right: 0;
+  height: 100%;
+  text-align: center;
+  color: #000000;
+}
+"
+
+appCSS2 <- "
+#loading-content2 {
+  position: absolute;
+  background: #FFFFFF;
+  opacity: 1;
+  z-index: 100;
+  left: 0;
+  right: 0;
+  height: 100%;
+  text-align: center;
+  color: #000000;
+}
+"
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader(
@@ -27,10 +55,17 @@ header <- dashboardHeader(
 sidebar <- dashboardSidebar(
   width = 350,
   useShinyjs(),
+  inlineCSS(appCSS1),
+
+  # Loading message
+  div(
+    id = "loading-content1",
+    h2("")
+  ),
   tags$head(
     tags$style(HTML("
-                      .sidebar {height: 140vh; overflow-y: auto; overflow-x: hidden;}
-                      ")) # adding position: fixed works but messes up the scroll bar position
+                    .sidebar {height: 160vh; overflow-y: auto; overflow-x: hidden;}
+                  ")) # adding position: fixed works but messes up the scroll bar position
   ),
   sidebarMenu(
     selectInput(
@@ -45,7 +80,7 @@ sidebar <- dashboardSidebar(
       ),
       selected = "country"
     ),
-    tags$h4(HTML('&nbsp;'),HTML('&nbsp;'),"2. Adjust base plot using the filters below"),
+    tags$h4(HTML("&nbsp;"), HTML("&nbsp;"), "2. Adjust base plot using the filters below"),
     radioButtons(
       inputId = "y_choice", label = "Display",
       choices = c(
@@ -54,37 +89,19 @@ sidebar <- dashboardSidebar(
       ),
       selected = NULL, inline = TRUE
     ),
-    sliderInput("year_slider",
-      label = "Date range",
-      min = list_year_start, max = list_year_end,
-      value = c(list_year_start, list_year_end),
-      sep = "", step = 1
-    ),
+    uiOutput("dateslider"),
     radioButtons(
-      inputId = "gltca_choice", label = "Data tag",
+      inputId = "gltca_choice", label = "Data tag*",
       choices = c(
         "All" = "ALL",
         "GLTCA only" = "GLTFCA"
       ),
       selected = "ALL", inline = TRUE
     ),
-
-    bsTooltip("gltca_choice", "This button filters the data to only include records collected in the Great Limpopo Transfrontier Conservation Area (GLTCA) which includes South Africa, Mozambique, and Zimbabwe.",
-              "bottom", options = list(container = "body"))
-    ,
-
     fluidRow(
       div(
         style = "display: inline-block;vertical-align:top; width:280px;  padding: 1px 10px",
-        selectizeInput(
-          inputId = "country_choice", label = "Country",
-          choices = list_countries,
-          selected = NULL,
-          multiple = TRUE,
-          options = list(
-            placeholder = "All countries selected"
-          )
-        )
+        uiOutput("select_country")
       ),
       div(
         style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
@@ -94,47 +111,17 @@ sidebar <- dashboardSidebar(
     fluidRow(
       div(
         style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
-        selectizeInput(
-          inputId = "animal_group_choice", label = "Animal group",
-          choices = list_taxa,
-          selected = NULL,
-          multiple = TRUE,
-          options = list(
-            placeholder = "All types selected"
-          )
-        )
+        uiOutput("select_animal_group")
       ),
       div(
         style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
         actionButton("reset_animal_group", "", icon = icon("rotate-left", lib = "font-awesome"))
       ),
-      bsTooltip("animal_group_choice", "Note when using species base plot: In the case where there are more
-                than 20 species within a group only the top 20 (in terms of mortality or incidents) will be plotted",
-                "top", options = list(container = "body"))
-
-
     ),
     fluidRow(
       div(
         style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
-        selectizeInput(
-          inputId = "species_choice", label = "Species",
-          choices = list(
-            `Vultures` = wp_data %>% filter(taxa == "Vulture") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Bird (excl raptors)` = wp_data %>% filter(taxa == "Bird (excl raptors)") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Fish` = wp_data %>% filter(taxa == "Fish") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Amphibians` = wp_data %>% filter(taxa == "Amphibian") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Invertebrates` = wp_data %>% filter(taxa == "Invertebrate") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Mammals` = wp_data %>% filter(taxa == "Mammal") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Raptors` = wp_data %>% filter(taxa == "Raptors") %>% pull(vernacularname) %>% unique() %>% sort(),
-            `Reptiles` = wp_data %>% filter(taxa == "Reptile") %>% pull(vernacularname) %>% unique() %>% sort()
-          ),
-          selected = NULL,
-          multiple = TRUE,
-          options = list(
-            placeholder = "All species selected"
-          )
-        )
+        uiOutput("select_species")
       ),
       div(
         style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
@@ -144,56 +131,56 @@ sidebar <- dashboardSidebar(
     fluidRow(
       div(
         style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
-        selectizeInput(
-          inputId = "poison_choice", label = "Poison type",
-          choices = list_poisons,
-          selected = NULL,
-          multiple = TRUE,
-          options = list(
-            placeholder = "All types selected"
-          )
-        )
+        uiOutput("select_poison_choice")
       ),
       div(
         style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
         actionButton("reset_poison_type", "", icon = icon("rotate-left", lib = "font-awesome"))
       )
     ),
-
     fluidRow(
       div(
         style = "display: inline-block;vertical-align:top; width:280px; padding: 1px 10px",
-        selectizeInput(
-          inputId = "reason_choice", label = "Poison reason",
-          choices = list_reason,
-          selected = NULL,
-          multiple = TRUE,
-          options = list(
-            placeholder = "All reasons selected"
-          )
-        )
+        uiOutput("select_reason_choice")
       ),
       div(
         style = "display: inline-block; vertical-align:top; width:50px; margin-top:31px",
         actionButton("reset_poison_reason", "", icon = icon("rotate-left", lib = "font-awesome"))
       )
+    ),
+    hr(),
+    div(style = "padding: 1px 10px",
+        tags$p("*This button filters the data to only include ",
+               tags$br(),
+               "records collected in the Great Limpopo",
+               tags$br(),
+               " Transfrontier Conservation Area (GLTCA) which",
+               tags$br(),
+               " includes South Africa, Mozambique, and Zimbabwe.",
+               tags$br(),
+               "")
+    ),
+    div(style = "padding: 1px 10px",
+        "**When using species base plot note",
+        tags$br(),
+        "that in the case where there are more",
+        tags$br(),
+        "than 20 species within an animal group only",
+        tags$br(),
+        "the top 20 (in terms of mortality or incidents)",
+        tags$br(),
+        " will be plotted.",
+        tags$br(),
+        "",
+        tags$br()
     )
   )
 )
 
-# absolutePanel(
-#   id = "test", class = "panel panel-default",
-#   fixed = TRUE, draggable = FALSE,
-#   top = 475, right = "auto", left = 200, bottom = "auto",
-#   width = 0, height = 0,
-#   actionButton("reset1", label = NULL, icon = icon("rotate-left", lib = "font-awesome"))
-# )
-
-
 # Body --------------------------------------------------------------------
 body <- dashboardBody(
   tags$head(tags$style(
-    HTML('.wrapper {height: auto !important; position:relative; overflow-x:hidden; overflow-y:hidden}')
+    HTML(".wrapper {height: auto !important; position:relative; overflow-x:hidden; overflow-y:hidden}")
   )),
   tags$style(HTML("
                   .box.box-solid.box-primary>.box-header {
@@ -221,76 +208,82 @@ body <- dashboardBody(
                   }
 
                   ")),
-  fluidRow(
-    column(width = 7,
-           style = "padding-top:10px",
-           img(src = 'logo_combined.png', height = "100px")
-           ),
-    column(width = 5,
-           splitLayout(
-           valueBox(
-             subtitle = HTML("Total <br> mortalities"),
-             value = sum(wp_data$mortality),
-             icon = icon("database", lib = "font-awesome"),
-             width = NULL,
-             color = "orange"
-           ),
-           valueBox(
-             subtitle = HTML("Total poisoning <br> incidents"),
-             value = length(unique(wp_data$global_id)),
-             icon = icon("skull-crossbones", lib = "font-awesome"),
-             width = NULL,
-             color = "yellow"
-           ),
-           valueBox(
-             subtitle = HTML("Total vulture <br> mortalities"),
-             value = wp_data %>%
-               filter(str_detect(vernacularname, "Vulture|Griffon")) %>%
-               summarise(vult_mort_total = sum(mortality)),
-             icon = icon("feather", lib = "font-awesome"),
-             width = NULL,
-             color = "red"
-           ),
-           cellWidths = c(150,150,150),
-           cellArgs = list(style="padding: 0px")
-           )
-           )
+
+  # Loading message
+  useShinyjs(),
+  inlineCSS(appCSS2),
+  div(
+    id = "loading-content2",
+    h2("Loading...")
   ),
-  fluidRow(column(width = 4,
-                  box(title = "About",
-                      width = NULL,
-                      status = "primary",
-                      solidHeader = TRUE,
-                      # height = "200px",
-                      collapsible = TRUE,
-                      collapsed = FALSE,
-                      tags$p("This app provides summary graphs of the data held in the African Wildlife Poisoning Database. The data have been collated
+  fluidRow(
+    column(
+      width = 7,
+      style = "padding-top:10px",
+      img(src = "logo_combined.png", height = "100px")
+    ),
+    column(
+      width = 5,
+      splitLayout(
+        uiOutput("valbox1"),
+        uiOutput("valbox2"),
+        uiOutput("valbox3"),
+        cellWidths = c(150, 150, 150),
+        cellArgs = list(style = "padding: 0px")
+      )
+    )
+  ),
+  fluidRow(
+    column(
+      width = 4,
+      box(
+        title = "About",
+        width = NULL,
+        status = "primary",
+        solidHeader = TRUE,
+        # height = "200px",
+        collapsible = TRUE,
+        collapsed = FALSE,
+        tags$p(
+          "This app provides summary graphs of the data held in the African Wildlife Poisoning Database. The data have been collated
                       from direct observations, and various reports in the media and published literature. Domestic animals are only included
                       where they were poisoned in a wildlife poisoning incident. For more information please visit",
-                      a("https://africanwildlifepoisoning.org",
-                        href = "https://africanwildlifepoisoning.org"))
-                  )),
-           column(width = 4,
-                  box(title = "Citation",
-                      width = NULL,
-                      status = "primary",
-                      solidHeader = TRUE,
-                      # height = "200px",
-                      collapsible = TRUE,
-                      collapsed = FALSE,
-                      "To cite the graphs and data, please use: The Endangered Wildlife Trust and the
-                      Peregrine Fund. yyyy. The African Wildlife Poisoning Database. Downloaded from www.awpd.cloud on yyyy-mm-dd")),
-           column(width = 4,
-                  box(title = "Disclaimer",
-                      width = NULL,
-                      status = "primary",
-                      solidHeader = TRUE,
-                      # height = "200px",
-                      collapsible = TRUE,
-                      collapsed = FALSE,
-                      "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality
+          a("https://africanwildlifepoisoning.org",
+            href = "https://africanwildlifepoisoning.org"
+          )
+        )
+      )
+    ),
+    column(
+      width = 4,
+      box(
+        title = "Citation",
+        width = NULL,
+        status = "primary",
+        solidHeader = TRUE,
+        # height = "200px",
+        collapsible = TRUE,
+        collapsed = FALSE,
+        "To cite the graphs and data, please use: The Endangered Wildlife Trust and the
+                      Peregrine Fund. yyyy. The African Wildlife Poisoning Database. Downloaded from www.awpd.cloud on yyyy-mm-dd"
+      )
+    ),
+    column(
+      width = 4,
+      box(
+        title = "Disclaimer",
+        width = NULL,
+        status = "primary",
+        solidHeader = TRUE,
+        # height = "200px",
+        collapsible = TRUE,
+        collapsed = FALSE,
+        "Numbers of incidents and mortalities per country are directly related to reporting rates. In reality
                       the actual number of incidents and mortalities are likely to be higher than those presented here, particularly
-                      in countries with low reporting rates."))),
+                      in countries with low reporting rates."
+      )
+    )
+  ),
   fluidRow(
     column(
       width = 12,
@@ -303,7 +296,7 @@ body <- dashboardBody(
         br(),
         plotOutput("plot", width = "auto")
       ),
-    div(
+      div(
         absolutePanel(
           id = "abspan5", class = "panel panel-default",
           fixed = FALSE, draggable = FALSE,
